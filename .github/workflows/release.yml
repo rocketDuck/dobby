@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    container: quay.io/pypa/manylinux1_x86_64
+
+    env:
+      PATH: /opt/python/cp38-cp38/bin:/opt/python/cp37-cp37m/bin:/opt/rh/devtoolset-8/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip poetry
+          poetry export --dev --format requirements.txt > dev-requirements.txt
+          pip install --requirement dev-requirements.txt
+      - name: Build distributions
+        run: |
+          ./scripts/build.sh
+      - uses: actions/upload-artifact@v1
+        with:
+          name: python-packages
+          path: dist
+      - uses: actions/upload-artifact@v1
+        with:
+          name: binaries
+          path: bin
+
+
+  release:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v1
+        with:
+          name: binaries
+          path: bin
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/dobby
+          asset_name: dobby
+          asset_content_type: application/octet-stream
