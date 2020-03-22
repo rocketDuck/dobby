@@ -1,9 +1,18 @@
-Dobby
-=====
+# Dobby
 
-Dobby deploys jobs to Nomad after templating them via Jinja2. This is currently still WIP.
+Dobby is a [Jinja](https://jinja.palletsprojects.com/)-powered opensource templating and deployment tool for [HashiCorp Nomad](https://www.nomadproject.io/) inspired by [Levant](https://github.com/jrasell/levant).
 
-Dobby is similar to [levant](https://github.com/jrasell/levant) but is written in Python and therefor using Jinja-Templates instead of go-templates. It supports all of Jinja, including template includes relative to the specified job template and recursive templating. Since nomad syntax would clash with Jinja templates, Jinja ist reconfigured to use `[[ ... ]]`, `[% ... %]` instead of the usual curly braces.
+## Features
+
+* **Deployment monitoring**: Dobby waits for a deployment to finish, making it ideal for CI/CD usage.
+* **Jinja2 templating**: Templates are based on the powerful Jinja2 templating language, which allows for recursive template inclusions etc...
+* **Variable file formats**: Dobby currently supports `.json`, `.yaml` and `.env` file formats for template variables as well as operating system environment variables (more below).
+
+## Download & Install
+
+TODO :) Currently not packaged at all.
+
+## Example
 
 A small example is shown below (try on your own shell for more colors ;)):
 
@@ -28,9 +37,25 @@ Job deployment finished succesfully.
 
 ```
 
-Supported variable interpolation formats
-----------------------------------------
+## Templating
 
-Dobby can (currently) interpret JSON, YAML and dotenv (.env) files as sources for template values. If `--var-file` is specified multiple times, the parsed variables are merged and variables specified later on the command line win.
+Dobby reads template variables from a variety of files (`.json/.yaml/.env`) and is able to merge multiple variable files before passing them on to Jinja2. To prevent conflicts with Nomad-Templates, Jinja is configured to use square instead of curly brackets (ie `[[ job.name ]]` instead of `{{ job.name }}`).
 
-Additionally the template context contains the environment variables of the calling system.
+Additionally Dobby takes environment variables into account since it can be annoying to create a variable file in CI/CD just to override one variable (the job name could be a common example). Environment variables are supported by upper-casing variable names, removing underscores and hyphens as well as replacing dots with underscores. This means a variable file ala:
+
+```yaml
+job:
+    name: test
+    dc: dc22
+    db_url: postgresql://host/db
+```
+
+can be also specified via the following environment variables:
+
+```
+JOB_NAME=test
+JOB_DC=dc22
+JOB_DBURL=postgresql://host/db
+```
+
+For people solely relying on environment variables the Jinja template context also contains them directly (ie they can be accessed via `[[ JOB_DBURL ]]`). In general dotted notation is prefered as it allows support for environment variables as well as variable files.

@@ -1,3 +1,4 @@
 ---
-job_name: example
-redis_version: 3.2
+job:
+    name: example
+    dc: dc1

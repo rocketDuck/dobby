@@ -9,7 +9,6 @@ from dotenv.main import DotEnv
 from jinja2 import Environment, FileSystemLoader
 from jinja2.runtime import Context
 
-ENVIRON = os.environ
 ENV_TRANS_TABLE = str.maketrans({"_": "", "-": "", ".": "_"})
 
 
@@ -18,32 +17,33 @@ def to_env_name(key):
 
 
 class EnvLookupDict(dict):
-    def __init__(self, data, previous):
+    def __init__(self, data, previous, os_environ):
         self._previous = previous
+        self._os_environ = os_environ
         super().__init__(data)
 
     def __getitem__(self, key):
         parts = self._previous + [key]
         env_name = to_env_name(".".join(parts))
-        if env_name in ENVIRON:
-            return ENVIRON[env_name]
+        if env_name in self._os_environ:
+            return self._os_environ[env_name]
         try:
             result = super().__getitem__(key)
         except KeyError:
             result = {}
         if isinstance(result, dict):
-            result = EnvLookupDict(result, parts)
+            result = EnvLookupDict(result, parts, self._os_environ)
         return result
 
 
 class EnvLookupContext(Context):
     def resolve(self, key):
         env_name = to_env_name(key)
-        if env_name in ENVIRON:
-            return ENVIRON[env_name]
+        if env_name in self.environment.os_environ:
+            return self.environment.os_environ[env_name]
         result = super().resolve(key)
         if isinstance(result, dict):
-            result = EnvLookupDict(result, [key])
+            result = EnvLookupDict(result, [key], self.environment.os_environ)
         return result
 
 
@@ -58,12 +58,13 @@ def merge_dict(current, next):
 
 
 def merge_var_files(*var_files):
+    env = os.environ
     vars = []
     for fname in var_files:
         if fname == "-":
             vars.append(yaml.safe_load(sys.stdin))
         elif fname.endswith(".env"):
-            vars.append(DotEnv(fname).dict())
+            env.update(DotEnv(fname).dict())
         else:
             with open(fname) as f:
                 if fname.endswith(".json"):
@@ -72,16 +73,16 @@ def merge_var_files(*var_files):
                     vars.append(yaml.safe_load(f))
 
     if not vars:
-        return {}
+        return {}, env
     elif len(vars) == 1:
-        return vars[0]
+        return vars[0], env
     else:
-        return functools.reduce(merge_dict, vars)
+        return functools.reduce(merge_dict, vars), env
 
 
 def render(hcl_file, var_files):
-    vars = merge_var_files(*var_files)
-    vars = merge_dict(vars, ENVIRON)
+    vars, os_environ = merge_var_files(*var_files)
+    vars = merge_dict(vars, os_environ)
     if hcl_file == "-":
         template_text = sys.stdin.read()
         search_path = pathlib.Path.cwd()
@@ -101,5 +102,6 @@ def render(hcl_file, var_files):
         comment_end_string="#]",
     )
     env.context_class = EnvLookupContext
+    env.os_environ = os_environ
     template = env.from_string(template_text)
     return template.render(vars)

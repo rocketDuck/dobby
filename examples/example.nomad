@@ -1,5 +1,5 @@
-job "[[ job_name ]]" {
-  datacenters = ["dc1"]
+job "[[ job.name ]]" {
+  datacenters = ["[[ job.dc ]]"]
 
   type = "service"
 
@@ -22,7 +22,7 @@ job "[[ job_name ]]" {
       driver = "docker"
 
       config {
-        image = "hashicorpnomad/counter-api:v1"
+        image = "hashicorpnomad/counter-api:[[ counter_api_version|default('v1') ]]"
       }
 
       resources {
