@@ -1,4 +1,4 @@
-import os
+import ssl
 import sys
 import time
 from importlib.metadata import version
@@ -10,10 +10,50 @@ from . import formatter, templates, utils
 
 
 class Config:
-    def __init__(self):
-        self.client = httpx.Client(
-            base_url=os.environ.get("NOMAD_ADDR", "http://127.0.0.1:4646")
+    def __init__(
+        self,
+        address,
+        region,
+        namespace,
+        ca_cert,
+        ca_path,
+        client_cert,
+        client_key,
+        tls_skip_verify=False,
+        token=None,
+    ):
+        headers = {}
+        if token:
+            headers["X-Nomad-Token"] = token
+
+        params = {}
+        if region:
+            params["region"] = region
+        if namespace:
+            params["namespace"] = namespace
+
+        verify = self.ssl_context(
+            ca_cert, ca_path, client_cert, client_key, tls_skip_verify
         )
+        self.client = httpx.Client(
+            base_url=address, headers=headers, params=params, verify=verify
+        )
+
+    def ssl_context(
+        self,
+        ca_cert=None,
+        ca_path=None,
+        client_cert=None,
+        client_key=None,
+        tls_skip_verify=False,
+    ):
+        context = ssl.create_default_context(cafile=ca_cert, capath=ca_path)
+        if tls_skip_verify:
+            context.verify_mode = ssl.CERT_NONE
+            context.check_hostname = False
+        if client_cert and client_key:
+            context.load_cert_chain(client_cert, client_key)
+        return context
 
     def parse_hcl_or_exit(self, job_spec):
         try:
@@ -54,11 +94,63 @@ def common_args(f):
 
 
 @click.group(cls=GlobalExceptionHandler)
+@click.option(
+    "--address",
+    envvar="NOMAD_ADDR",
+    default="http://127.0.0.1:4646",
+    help="Nomad server to connect to.",
+)
+@click.option(
+    "--region",
+    envvar="NOMAD_REGION",
+    help="The region of the Nomad servers to forward commands to.",
+)
+@click.option(
+    "--namespace",
+    envvar="NOMAD_NAMESPACE",
+    help="The target namespace for queries and actions bound to a namespace.",
+)
+@click.option(
+    "--ca-cert",
+    envvar="NOMAD_CACERT",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help="Path to a PEM encoded CA cert file to use to verify the Nomad server SSL certificate.",
+)
+@click.option(
+    "--ca-path",
+    envvar="NOMAD_CAPATH",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help="Path to a directory of PEM encoded CA cert files to verify the Nomad server SSL certificate.",
+)
+@click.option(
+    "--client-cert",
+    envvar="NOMAD_CLIENT_CERT",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help="Path to a PEM encoded client certificate for TLS authentication to the Nomad server.",
+)
+@click.option(
+    "--client-key",
+    envvar="NOMAD_CLIENT_KEY",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
+)
+@click.option(
+    "--token",
+    envvar="NOMAD_TOKEN",
+    help="The SecretID of an ACL token to use to authenticate API requests with.",
+)
+@click.option(
+    "--tls-skip-verify",
+    is_flag=True,
+    envvar="NOMAD_SKIP_VERIFY",
+    default=False,
+    help="Do not verify TLS certificate. This is highly not recommended.",
+)
 @click.version_option(version("dobby"))
 @click.pass_context
-def cli(ctx):
+def cli(ctx, **kwargs):
     """Dobby deploys (Jinja-)templated jobs to nomad"""
-    ctx.obj = Config()
+    ctx.obj = Config(**kwargs)
 
 
 @cli.command()
