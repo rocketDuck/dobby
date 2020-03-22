@@ -3,6 +3,7 @@ import time
 from importlib.metadata import version
 
 import click
+from httpx import NetworkError
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 
 from . import formatter, templates, utils
@@ -23,6 +24,8 @@ class GlobalExceptionHandler(click.Group):
                 fg="red",
                 err=True,
             )
+        except NetworkError as e:
+            click.secho(f"Network-error: {e.args[0]}", fg="red", err=True)
         except TemplateSyntaxError as e:
             click.secho(f"Template parsing failed: {e.message}{nl}", fg="red", err=True)
             raise
