@@ -7,6 +7,8 @@ import click
 from . import formatter, templates, utils
 from .config import Config
 
+CONTEXT_SETTINGS = {"help_option_names": ["-help"]}
+
 
 class GlobalExceptionHandler(click.Group):
     def __call__(self, *args, **kwargs):
@@ -29,66 +31,66 @@ def common_args(f):
         exists=True, allow_dash=True, file_okay=True, dir_okay=False, resolve_path=True
     )
     click.argument("input", type=path_type)(f)
-    click.option(
-        "--var-file", "-v", "var_files", type=path_type, default=[], multiple=True,
-    )(f)
+    click.option("-var-file", "var_files", type=path_type, default=[], multiple=True,)(
+        f
+    )
     return f
 
 
-@click.group(cls=GlobalExceptionHandler)
+@click.group(cls=GlobalExceptionHandler, context_settings=CONTEXT_SETTINGS)
 @click.option(
-    "--address",
+    "-address",
     envvar="NOMAD_ADDR",
     default="http://127.0.0.1:4646",
     help="Nomad server to connect to.",
 )
 @click.option(
-    "--region",
+    "-region",
     envvar="NOMAD_REGION",
     help="The region of the Nomad servers to forward commands to.",
 )
 @click.option(
-    "--namespace",
+    "-namespace",
     envvar="NOMAD_NAMESPACE",
     help="The target namespace for queries and actions bound to a namespace.",
 )
 @click.option(
-    "--ca-cert",
+    "-ca-cert",
     envvar="NOMAD_CACERT",
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help="Path to a PEM encoded CA cert file to use to verify the Nomad server SSL certificate.",
 )
 @click.option(
-    "--ca-path",
+    "-ca-path",
     envvar="NOMAD_CAPATH",
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help="Path to a directory of PEM encoded CA cert files to verify the Nomad server SSL certificate.",
 )
 @click.option(
-    "--client-cert",
+    "-client-cert",
     envvar="NOMAD_CLIENT_CERT",
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help="Path to a PEM encoded client certificate for TLS authentication to the Nomad server.",
 )
 @click.option(
-    "--client-key",
+    "-client-key",
     envvar="NOMAD_CLIENT_KEY",
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
 )
 @click.option(
-    "--token",
+    "-token",
     envvar="NOMAD_TOKEN",
     help="The SecretID of an ACL token to use to authenticate API requests with.",
 )
 @click.option(
-    "--tls-skip-verify",
+    "-tls-skip-verify",
     is_flag=True,
     envvar="NOMAD_SKIP_VERIFY",
     default=False,
     help="Do not verify TLS certificate. This is highly not recommended.",
 )
-@click.version_option(version("dobby"))
+@click.version_option(version("dobby"), "-version")
 @click.pass_context
 def cli(ctx, **kwargs):
     """Dobby deploys (Jinja-)templated jobs to nomad"""
@@ -96,8 +98,8 @@ def cli(ctx, **kwargs):
 
 
 @cli.command()
-@click.option("--verbose", is_flag=True, default=False)
-@click.option("--detach", is_flag=True, default=False)
+@click.option("-verbose", is_flag=True, default=False)
+@click.option("-detach", is_flag=True, default=False)
 @common_args
 # @click.option("--strict", is_flag=True, default=False)
 @click.pass_obj
