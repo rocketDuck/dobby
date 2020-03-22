@@ -79,9 +79,9 @@ def common_args(f):
     help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
 )
 @click.option(
-    "-token",
-    envvar="NOMAD_TOKEN",
-    help="The SecretID of an ACL token to use to authenticate API requests with.",
+    "-tls-server-name",
+    envvar="NOMAD_TLS_SERVER_NAME",
+    help="The server name to use as the SNI host when connecting via TLS.",
 )
 @click.option(
     "-tls-skip-verify",
@@ -89,6 +89,11 @@ def common_args(f):
     envvar="NOMAD_SKIP_VERIFY",
     default=False,
     help="Do not verify TLS certificate. This is highly not recommended.",
+)
+@click.option(
+    "-token",
+    envvar="NOMAD_TOKEN",
+    help="The SecretID of an ACL token to use to authenticate API requests with.",
 )
 @click.version_option(version("dobby"), "-version")
 @click.pass_context
