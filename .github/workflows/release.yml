@@ -79,7 +79,7 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@2da252bbb10a6ef49ade47c5c89ac65d46b9abdf
         with:
-          name: rocketDuck/dobby
+          name: rocketduck/dobby
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           tag_semver: true
