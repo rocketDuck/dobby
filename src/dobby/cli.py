@@ -99,6 +99,10 @@ def common_args(f):
 @click.pass_context
 def cli(ctx, **kwargs):
     """Dobby deploys (Jinja-)templated jobs to nomad"""
+    client_cert = kwargs["client_cert"]
+    client_key = kwargs["client_key"]
+    if any([client_cert, client_key]) and not all([client_cert, client_key]):
+        ctx.fail("-client-cert requires -client-key (and vice versa).")
     ctx.obj = Config(**kwargs)
 
 
@@ -235,3 +239,14 @@ def monitor_job(config, eval_id, deployment_id=None):
         else:
             time.sleep(3)
             continue
+
+
+def main():
+    def patch_options(options):
+        for option in options:
+            if option.startswith("--") and len(option) > 2:
+                option = option[1:]
+
+            yield option
+
+    return cli.main(patch_options(sys.argv[1:]))
