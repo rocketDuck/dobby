@@ -2,18 +2,61 @@ import functools
 import json
 import os
 import pathlib
-import sys
 
 import yaml
 from dotenv.main import DotEnv
 from jinja2 import Environment, FileSystemLoader
+from jinja2 import StrictUndefined as JinjaUndefined
+from jinja2 import UndefinedError
 from jinja2.runtime import Context
+from jinja2.utils import missing
 
 ENV_TRANS_TABLE = str.maketrans({"_": "", "-": "", ".": "_"})
 
 
 def to_env_name(key):
     return key.upper().translate(ENV_TRANS_TABLE)
+
+
+class StrictUndefined(JinjaUndefined):
+    __slots__ = (
+        "_undefined_hint",
+        "_undefined_obj",
+        "_undefined_name",
+        "_undefined_exception",
+        "_previous",
+        "_os_environ",
+    )
+
+    def __init__(
+        self,
+        hint=None,
+        obj=missing,
+        name=None,
+        exc=UndefinedError,
+        previous=[],
+        os_environ={},
+    ):
+        self._previous = previous
+        self._os_environ = os_environ
+        super().__init__(hint, obj, name, exc)
+
+    def __getattr__(self, key):
+        parts = self._previous + [key]
+        env_name = to_env_name(".".join(parts))
+        if env_name in self._os_environ:
+            return self._os_environ[env_name]
+        else:
+            return StrictUndefined(
+                self._undefined_hint,
+                self._undefined_obj,
+                self._undefined_name,
+                self._undefined_exception,
+                parts,
+                self._os_environ,
+            )
+
+    __getitem__ = __getattr__
 
 
 class EnvLookupDict(dict):
@@ -30,7 +73,9 @@ class EnvLookupDict(dict):
         try:
             result = super().__getitem__(key)
         except KeyError:
-            result = {}
+            return StrictUndefined(
+                name=key, previous=parts, os_environ=self._os_environ
+            )
         if isinstance(result, dict):
             result = EnvLookupDict(result, parts, self._os_environ)
         return result
@@ -61,9 +106,7 @@ def merge_var_files(*var_files):
     env = os.environ
     vars = []
     for fname in var_files:
-        if fname == "-":
-            vars.append(yaml.safe_load(sys.stdin))
-        elif fname.endswith(".env"):
+        if fname.endswith(".env"):
             env.update(DotEnv(fname).dict())
         else:
             with open(fname) as f:
@@ -88,13 +131,10 @@ def render(hcl_file, var_files):
         if k.split("_")[0] not in ("NOMAD", "CONSUL")
     }
     vars = merge_dict(vars, os_environ)
-    if hcl_file == "-":
-        template_text = sys.stdin.read()
-        search_path = pathlib.Path.cwd()
-    else:
-        with open(hcl_file, mode="r") as ftemplate:
-            template_text = ftemplate.read()
-        search_path = pathlib.Path(hcl_file).parent
+
+    p = pathlib.Path(hcl_file)
+    template_name = p.name
+    search_path = p.parent
 
     env = Environment(
         loader=FileSystemLoader(search_path),
@@ -108,5 +148,5 @@ def render(hcl_file, var_files):
     )
     env.context_class = EnvLookupContext
     env.os_environ = os_environ
-    template = env.from_string(template_text)
+    template = env.get_template(template_name)
     return template.render(vars)

@@ -3,6 +3,7 @@ import time
 from importlib.metadata import version
 
 import click
+from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 
 from . import formatter, templates, utils
 from .config import Config
@@ -11,9 +12,10 @@ CONTEXT_SETTINGS = {"help_option_names": ["-help"]}
 
 
 class GlobalExceptionHandler(click.Group):
-    def __call__(self, *args, **kwargs):
+    def main(self, *args, **kwargs):
+        nl = "\n"
         try:
-            return self.main(*args, **kwargs)
+            return super().main(*args, **kwargs)
         except utils.ApiError as e:
             status, text = e.response.status_code, e.response.text
             click.secho(
@@ -21,14 +23,21 @@ class GlobalExceptionHandler(click.Group):
                 fg="red",
                 err=True,
             )
-        else:
+        except TemplateSyntaxError as e:
+            click.secho(f"Template parsing failed: {e.message}{nl}", fg="red", err=True)
             raise
+        except UndefinedError as e:
+            click.secho(
+                f"Template rendering failed: {e.message}{nl}", fg="red", err=True
+            )
+            raise
+
         sys.exit(1)
 
 
 def common_args(f):
     path_type = click.Path(
-        exists=True, allow_dash=True, file_okay=True, dir_okay=False, resolve_path=True
+        exists=True, allow_dash=False, file_okay=True, dir_okay=False, resolve_path=True
     )
     click.argument("input", type=path_type)(f)
     click.option("-var-file", "var_files", type=path_type, default=[], multiple=True,)(
