@@ -71,11 +71,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v1
         with:
           name: python-packages
           path: dist
-      - uses: actions/checkout@v2
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@2da252bbb10a6ef49ade47c5c89ac65d46b9abdf
         with:
