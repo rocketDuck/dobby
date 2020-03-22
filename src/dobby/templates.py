@@ -82,6 +82,11 @@ def merge_var_files(*var_files):
 
 def render(hcl_file, var_files):
     vars, os_environ = merge_var_files(*var_files)
+    os_environ = {
+        k: v
+        for k, v in os_environ.items()
+        if k.split("_")[0] not in ("NOMAD", "CONSUL")
+    }
     vars = merge_dict(vars, os_environ)
     if hcl_file == "-":
         template_text = sys.stdin.read()
