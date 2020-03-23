@@ -1,6 +1,5 @@
 import sys
 import time
-from importlib.metadata import version
 
 import click
 from httpx import NetworkError
@@ -8,6 +7,12 @@ from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 
 from . import formatter, templates, utils
 from .config import Config
+
+try:
+    from importlib.metadata import version
+except ModuleNotFoundError:
+    from importlib_metadata import version
+
 
 CONTEXT_SETTINGS = {"help_option_names": ["-help"]}
 
