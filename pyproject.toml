@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dobby"
-version = "0.1.6"
+version = "0.1.7"
 description = "Dobby is a CI/CD helper to deploy templated (jinja2) tasks to Nomad"
 authors = ["Florian Apolloner <florian@apolloner.eu>"]
 license = "BSD-3-Clause"
