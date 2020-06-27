@@ -2,6 +2,8 @@
 
 Dobby is a [Jinja](https://jinja.palletsprojects.com/)-powered opensource templating and deployment tool for [HashiCorp Nomad](https://www.nomadproject.io/) inspired by [Levant](https://github.com/jrasell/levant).
 
+> :warning: **pre-release version**: The name and functionality of the project might change without warning till the first release.
+
 ## Features
 
 * **Deployment monitoring**: Dobby waits for a deployment to finish, making it ideal for CI/CD usage.
@@ -10,7 +12,7 @@ Dobby is a [Jinja](https://jinja.palletsprojects.com/)-powered opensource templa
 
 ## Download & Install
 
-TODO :) Currently not packaged at all.
+See GitHub releases for binaries.
 
 ## Example
 
