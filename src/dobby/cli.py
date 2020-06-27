@@ -2,11 +2,8 @@ import sys
 import time
 
 import click
-from httpx import NetworkError
-from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 
 from . import formatter, templates, utils
-from .config import Config
 
 try:
     from importlib.metadata import version
@@ -17,118 +14,28 @@ except ModuleNotFoundError:
 CONTEXT_SETTINGS = {"help_option_names": ["-help"]}
 
 
-class GlobalExceptionHandler(click.Group):
-    def main(self, *args, **kwargs):
-        nl = "\n"
-        try:
-            return super().main(*args, **kwargs)
-        except utils.ApiError as e:
-            status, text = e.response.status_code, e.response.text
-            click.secho(
-                f"API call failed with status code {status} and message:\n\n{text}",
-                fg="red",
-                err=True,
-            )
-        except NetworkError as e:
-            click.secho(f"Network-error: {e.args[0]}", fg="red", err=True)
-        except TemplateSyntaxError as e:
-            click.secho(f"Template parsing failed: {e.message}{nl}", fg="red", err=True)
-            raise
-        except UndefinedError as e:
-            click.secho(
-                f"Template rendering failed: {e.message}{nl}", fg="red", err=True
-            )
-            raise
-
-        sys.exit(1)
-
-
-def common_args(f):
-    path_type = click.Path(
-        exists=True, allow_dash=False, file_okay=True, dir_okay=False, resolve_path=True
-    )
-    click.argument("input", type=path_type)(f)
-    click.option("-var-file", "var_files", type=path_type, default=[], multiple=True,)(
-        f
-    )
-    return f
-
-
-@click.group(cls=GlobalExceptionHandler, context_settings=CONTEXT_SETTINGS)
-@click.option(
-    "-address",
-    envvar="NOMAD_ADDR",
-    default="http://127.0.0.1:4646",
-    help="Nomad server to connect to.",
-)
-@click.option(
-    "-region",
-    envvar="NOMAD_REGION",
-    help="The region of the Nomad servers to forward commands to.",
-)
-@click.option(
-    "-namespace",
-    envvar="NOMAD_NAMESPACE",
-    help="The target namespace for queries and actions bound to a namespace.",
-)
-@click.option(
-    "-ca-cert",
-    envvar="NOMAD_CACERT",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
-    help="Path to a PEM encoded CA cert file to use to verify the Nomad server SSL certificate.",
-)
-@click.option(
-    "-ca-path",
-    envvar="NOMAD_CAPATH",
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Path to a directory of PEM encoded CA cert files to verify the Nomad server SSL certificate.",
-)
-@click.option(
-    "-client-cert",
-    envvar="NOMAD_CLIENT_CERT",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
-    help="Path to a PEM encoded client certificate for TLS authentication to the Nomad server.",
-)
-@click.option(
-    "-client-key",
-    envvar="NOMAD_CLIENT_KEY",
-    type=click.Path(exists=True, file_okay=True, dir_okay=False),
-    help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
-)
-@click.option(
-    "-tls-server-name",
-    envvar="NOMAD_TLS_SERVER_NAME",
-    help="The server name to use as the SNI host when connecting via TLS.",
-)
-@click.option(
-    "-tls-skip-verify",
-    is_flag=True,
-    envvar="NOMAD_SKIP_VERIFY",
-    default=False,
-    help="Do not verify TLS certificate. This is highly not recommended.",
-)
-@click.option(
-    "-token",
-    envvar="NOMAD_TOKEN",
-    help="The SecretID of an ACL token to use to authenticate API requests with.",
-)
+@click.group(cls=utils.Group, context_settings=CONTEXT_SETTINGS)
 @click.version_option(version("dobby"), "-version")
-@click.pass_context
-def cli(ctx, **kwargs):
+def cli():
     """Dobby deploys (Jinja-)templated jobs to nomad"""
-    client_cert = kwargs["client_cert"]
-    client_key = kwargs["client_key"]
-    if any([client_cert, client_key]) and not all([client_cert, client_key]):
-        ctx.fail("-client-cert requires -client-key (and vice versa).")
-    ctx.obj = Config(**kwargs)
 
 
 @cli.command()
-@click.option("-verbose", is_flag=True, default=False)
-@click.option("-detach", is_flag=True, default=False)
-@common_args
-# @click.option("--strict", is_flag=True, default=False)
-@click.pass_obj
+@utils.connectivity_options
+@utils.template_options
+@click.option(
+    "-verbose",
+    is_flag=True,
+    default=False,
+    help="Provide a verbose output of the planned changes.",
+)
+@click.option(
+    "-detach",
+    is_flag=True,
+    default=False,
+    help="Do not wait for the deployment to finish and quit after submission.",
+)
+@utils.pass_config
 @click.pass_context
 def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
     """Deploy a job"""
@@ -179,8 +86,9 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
 
 
 @cli.command()
-@common_args
-@click.pass_obj
+@utils.connectivity_options
+@utils.template_options
+@utils.pass_config
 def validate(config, input, var_files):
     """Validate a job specification"""
     job_spec = templates.render(input, var_files)
@@ -204,9 +112,8 @@ def validate(config, input, var_files):
 
 
 @cli.command()
-@common_args
-@click.pass_obj
-def render(config, input, var_files):
+@utils.template_options
+def render(input, var_files):
     """Render a template to stdout"""
     print(templates.render(input, var_files))
 
@@ -266,4 +173,6 @@ def main():
 
             yield option
 
-    return cli.main(patch_options(sys.argv[1:]))
+    return cli.main(
+        patch_options(sys.argv[1:]), prog_name="dobby", max_content_width=220
+    )
