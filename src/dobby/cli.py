@@ -168,4 +168,4 @@ def monitor_job(config, eval_id, deployment_id=None):
 
 
 def main():
-    return cli.main(sys.argv[1:], prog_name="dobby", max_content_width=220)
+    return cli.main(prog_name="dobby", max_content_width=220)
