@@ -14,7 +14,8 @@ a = Analysis(
     pathex=[here],
     binaries=[],
     datas=copy_metadata("dobby"),
-    hiddenimports=[],
+    # Till https://github.com/pyinstaller/pyinstaller/commit/91481570517707fc70aa70dca9eb986c61eac35d is released
+    hiddenimports=["pkg_resources.py2_warn"],
     hookspath=[],
     runtime_hooks=[],
     excludes=[],

@@ -6,7 +6,27 @@ on:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
 
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.8'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip poetry
+          poetry export --dev --format requirements.txt > dev-requirements.txt
+          pip install --requirement dev-requirements.txt
+      - name: Build python distribution
+        run: |
+          poetry build
+      - uses: actions/upload-artifact@v1
+        with:
+          name: python-packages
+          path: dist
+
+  package-pex:
     runs-on: ubuntu-latest
 
     container: quay.io/pypa/manylinux2014_x86_64
@@ -16,42 +36,55 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip poetry
           poetry export --dev --format requirements.txt > dev-requirements.txt
           pip install --requirement dev-requirements.txt
-      - name: Install UPX
-        run: yum install -y upx
-      - name: Build distributions
+      - name: Build pex distribution
         run: |
           ./scripts/build.sh
+      - uses: actions/upload-artifact@v1
+        with:
+          name: binary-generic
+          path: bin
+
+  package-linux:
+    runs-on: ubuntu-latest
+
+    container: centos:7
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install system dependencies
+        run: yum install -y python3 upx
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip poetry
+          poetry export --dev --format requirements.txt > dev-requirements.txt
+          python3 -m pip install --requirement dev-requirements.txt
+      - name: Build linux distribution
+        run: |
+          python3 -m pip install .
           pyinstaller --noconfirm --distpath bin dobby.spec
       - uses: actions/upload-artifact@v1
         with:
-          name: python-packages
-          path: dist
-      - uses: actions/upload-artifact@v1
-        with:
-          name: binaries
+          name: binary-linux
           path: bin
 
-
   release:
-    needs: build
+    needs: [package-pex, package-linux]
 
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v2
         with:
-          name: binaries
+          name: binary-generic
+          path: bin
+      - uses: actions/download-artifact@v2
+        with:
+          name: binary-linux
           path: bin
       - name: Create Release
         id: create_release
@@ -89,7 +122,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v1
+      - uses: actions/download-artifact@v2
         with:
           name: python-packages
           path: dist
