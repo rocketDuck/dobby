@@ -28,6 +28,13 @@ class ConnectivityOption(click.Option):
 
 
 class Command(click.Command):
+    def __init__(self, *args, **kwargs):
+        kwargs["epilog"] = (
+            "For convenience and similarity with the Nomad CLI it is possible to "
+            "replace the initial double dash from options with a single dash."
+        )
+        super().__init__(*args, **kwargs)
+
     def format_options(self, ctx, formatter):
         conn_opts = []
         command_opts = []

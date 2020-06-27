@@ -40,7 +40,7 @@ def cli():
 @utils.pass_config
 @click.pass_context
 def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
-    """Deploy a job"""
+    """Deploy a job to Nomad after templating it."""
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
 
@@ -92,7 +92,7 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
 @utils.template_options
 @utils.pass_config
 def validate(config, input, var_files):
-    """Validate a job specification"""
+    """Validate a job specification."""
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
 
@@ -116,7 +116,7 @@ def validate(config, input, var_files):
 @cli.command()
 @utils.template_options
 def render(input, var_files):
-    """Render a template to stdout"""
+    """Render a template to stdout."""
     print(templates.render(input, var_files))
 
 
