@@ -11,11 +11,11 @@ except ModuleNotFoundError:
     from importlib_metadata import version
 
 
-CONTEXT_SETTINGS = {"help_option_names": ["-help"]}
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(cls=utils.Group, context_settings=CONTEXT_SETTINGS)
-@click.version_option(version("dobby"), "-version")
+@click.version_option(version("dobby"), "--version", "-v")
 def cli():
     """Dobby deploys (Jinja-)templated jobs to nomad"""
 
@@ -24,13 +24,15 @@ def cli():
 @utils.connectivity_options
 @utils.template_options
 @click.option(
-    "-verbose",
+    "--verbose",
+    "-v",
     is_flag=True,
     default=False,
     help="Provide a verbose output of the planned changes.",
 )
 @click.option(
-    "-detach",
+    "--detach",
+    "-d",
     is_flag=True,
     default=False,
     help="Do not wait for the deployment to finish and quit after submission.",
@@ -166,13 +168,4 @@ def monitor_job(config, eval_id, deployment_id=None):
 
 
 def main():
-    def patch_options(options):
-        for option in options:
-            if option.startswith("--") and len(option) > 2:
-                option = option[1:]
-
-            yield option
-
-    return cli.main(
-        patch_options(sys.argv[1:]), prog_name="dobby", max_content_width=220
-    )
+    return cli.main(sys.argv[1:], prog_name="dobby", max_content_width=220)

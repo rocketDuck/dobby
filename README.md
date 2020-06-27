@@ -19,7 +19,7 @@ See GitHub releases for binaries.
 A small example is shown below (try on your own shell for more colors ;)):
 
 ```bash
-$ dobby deploy -var-file examples/vars.yaml examples/redis.nomad
+$ dobby deploy --var-file examples/vars.yaml examples/redis.nomad
 Planned changes:
 
 + Job: "redis"

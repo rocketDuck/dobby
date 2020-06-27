@@ -83,7 +83,7 @@ def connectivity_options(f):
     }
     args = [
         click.option(
-            "-address",
+            "--address",
             envvar="NOMAD_ADDR",
             default="http://127.0.0.1:4646",
             help="Nomad server to connect to.",
@@ -92,53 +92,53 @@ def connectivity_options(f):
             **shared,
         ),
         click.option(
-            "-region",
+            "--region",
             envvar="NOMAD_REGION",
             help="The region of the Nomad servers to forward commands to.",
             **shared,
         ),
         click.option(
-            "-namespace",
+            "--namespace",
             envvar="NOMAD_NAMESPACE",
             help="The target namespace for queries and actions bound to a namespace.",
             **shared,
         ),
         click.option(
-            "-ca-cert",
+            "--ca-cert",
             envvar="NOMAD_CACERT",
             type=click.Path(exists=True, file_okay=True, dir_okay=False),
             help="Path to a PEM encoded CA cert file to use to verify the Nomad server SSL certificate.",
             **shared,
         ),
         click.option(
-            "-ca-path",
+            "--ca-path",
             envvar="NOMAD_CAPATH",
             type=click.Path(exists=True, file_okay=False, dir_okay=True),
             help="Path to a directory of PEM encoded CA cert files to verify the Nomad server SSL certificate.",
             **shared,
         ),
         click.option(
-            "-client-cert",
+            "--client-cert",
             envvar="NOMAD_CLIENT_CERT",
             type=click.Path(exists=True, file_okay=True, dir_okay=False),
             help="Path to a PEM encoded client certificate for TLS authentication to the Nomad server.",
             **shared,
         ),
         click.option(
-            "-client-key",
+            "--client-key",
             envvar="NOMAD_CLIENT_KEY",
             type=click.Path(exists=True, file_okay=True, dir_okay=False),
             help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
             **shared,
         ),
         click.option(
-            "-tls-server-name",
+            "--tls-server-name",
             envvar="NOMAD_TLS_SERVER_NAME",
             help="The server name to use as the SNI host when connecting via TLS.",
             **shared,
         ),
         click.option(
-            "-tls-skip-verify",
+            "--tls-skip-verify",
             is_flag=True,
             envvar="NOMAD_SKIP_VERIFY",
             default=False,
@@ -146,7 +146,7 @@ def connectivity_options(f):
             **shared,
         ),
         click.option(
-            "-token",
+            "--token",
             envvar="NOMAD_TOKEN",
             help="The SecretID of an ACL token to use to authenticate API requests with.",
             **shared,
@@ -163,7 +163,7 @@ def template_options(f):
     )
     args = [
         click.option(
-            "-var-file",
+            "--var-file",
             "var_files",
             type=path_type,
             default=[],
