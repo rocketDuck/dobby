@@ -9,20 +9,26 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    container: quay.io/pypa/manylinux1_x86_64
+    container: quay.io/pypa/manylinux2014_x86_64
 
     env:
       PATH: /opt/python/cp38-cp38/bin:/opt/python/cp37-cp37m/bin:/opt/rh/devtoolset-8/root/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
     steps:
       - uses: actions/checkout@v1
+      - uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip poetry
           poetry export --dev --format requirements.txt > dev-requirements.txt
           pip install --requirement dev-requirements.txt
       - name: Install UPX
-        run: sudo apt-get install upx
+        run: yum install -y upx
       - name: Build distributions
         run: |
           ./scripts/build.sh
