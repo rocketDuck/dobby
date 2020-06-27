@@ -21,9 +21,12 @@ jobs:
           python -m pip install --upgrade pip poetry
           poetry export --dev --format requirements.txt > dev-requirements.txt
           pip install --requirement dev-requirements.txt
+      - name: Install UPX
+        run: sudo apt-get install upx
       - name: Build distributions
         run: |
           ./scripts/build.sh
+          pyinstaller --noconfirm --distpath bin dobby.spec
       - uses: actions/upload-artifact@v1
         with:
           name: python-packages
@@ -54,15 +57,23 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Release Asset (pex)
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./bin/dobby
-          asset_name: dobby
+          asset_name: dobby-generic
+          asset_content_type: application/octet-stream
+      - name: Upload Release Asset (pyinstaller)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bin/dobby-linux
+          asset_name: dobby-linux
           asset_content_type: application/octet-stream
 
   docker:
