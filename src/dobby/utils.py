@@ -45,6 +45,20 @@ class Command(click.Command):
             with formatter.section("Command Options"):
                 formatter.write_dl(command_opts)
 
+    def make_parser(self, ctx):
+        class Parser(click.OptionParser):
+            def add_option(self, opts, *args, **kwargs):
+                opts = list(opts)
+                for opt in opts:
+                    if opt.startswith("--"):
+                        opts.append(opt[1:])
+                super().add_option(opts, *args, **kwargs)
+
+        parser = Parser(ctx)
+        for param in self.get_params(ctx):
+            param.add_to_parser(parser, ctx)
+        return parser
+
 
 class Group(click.Group):
     def main(self, *args, **kwargs):
@@ -74,6 +88,9 @@ class Group(click.Group):
     def command(self, *args, **kwargs):
         kwargs["cls"] = Command
         return super().command(*args, **kwargs)
+
+    def make_parser(self, ctx):
+        return Command.make_parser(self, ctx)
 
 
 def connectivity_options(f):
