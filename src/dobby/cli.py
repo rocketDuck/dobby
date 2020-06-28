@@ -5,17 +5,11 @@ import click
 
 from . import formatter, templates, utils
 
-try:
-    from importlib.metadata import version
-except ModuleNotFoundError:
-    from importlib_metadata import version
-
-
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(cls=utils.Group, context_settings=CONTEXT_SETTINGS)
-@click.version_option(version("dobby"), "--version", "-v")
+@click.version_option(None, "--version", "-v")
 def cli():
     """Dobby deploys (Jinja-)templated jobs to nomad"""
 
