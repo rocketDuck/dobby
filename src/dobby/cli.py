@@ -44,20 +44,7 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
 
-    result = {"Job": job, "Diff": True}
-    response = config.client.put(f"/v1/job/{job['ID']}/plan", json=result)
-
-    if response.status_code != 200:
-        raise utils.ApiError(response)
-
-    data = response.json()
-    diff = data["Diff"]
-    if diff:
-        click.secho("Planned changes:\n", bold=True)
-        click.echo(formatter.format_job_diff(diff, verbose), nl=False)
-
-    click.secho("Scheduler dry-run:", bold=True)
-    click.echo(formatter.format_dry_run(data, job), nl=False)
+    data = plan_job(ctx, config, job, verbose)
 
     if data["FailedTGAllocs"] and strict:
         click.secho("\nAborting execution due to failed allocations.", fg="red")
@@ -85,6 +72,25 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
     else:
         click.secho("\nJob deployment failed.", fg="red", bold=True)
         click.exit(1)
+
+
+@cli.command()
+@utils.connectivity_options
+@utils.template_options
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Provide a verbose output of the planned changes.",
+)
+@utils.pass_config
+@click.pass_context
+def plan(ctx, config, input, var_files, verbose):
+    job_spec = templates.render(input, var_files)
+    job = config.parse_hcl_or_exit(job_spec)
+
+    plan_job(ctx, config, job, verbose)
 
 
 @cli.command()
@@ -118,6 +124,25 @@ def validate(config, input, var_files):
 def render(input, var_files):
     """Render a template to stdout."""
     print(templates.render(input, var_files))
+
+
+def plan_job(ctx, config, job, verbose):
+    result = {"Job": job, "Diff": True}
+    response = config.client.put(f"/v1/job/{job['ID']}/plan", json=result)
+
+    if response.status_code != 200:
+        raise utils.ApiError(response)
+
+    data = response.json()
+    diff = data["Diff"]
+    if diff:
+        click.secho("Planned changes:\n", bold=True)
+        click.echo(formatter.format_job_diff(diff, verbose), nl=False)
+
+    click.secho("Scheduler dry-run:", bold=True)
+    click.echo(formatter.format_dry_run(data, job), nl=False)
+
+    return data
 
 
 def monitor_job(config, eval_id, deployment_id=None):
