@@ -67,7 +67,10 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
 
     data = response.json()
     click.secho("\nJob Submission:", bold=True)
-    if monitor_job(config, data["EvalID"]):
+    success, deployment_id = monitor_evaluation(config, data["EvalID"])
+    if success and deployment_id:
+        success = monitor_deployment(config, deployment_id)
+    if success:
         click.secho("\nJob deployment finished succesfully.", fg="green", bold=True)
     else:
         click.secho("\nJob deployment failed.", fg="red", bold=True)
@@ -91,6 +94,35 @@ def plan(ctx, config, input, var_files, verbose):
     job = config.parse_hcl_or_exit(job_spec)
 
     plan_job(ctx, config, job, verbose)
+
+
+@cli.command()
+@utils.connectivity_options
+@utils.template_options
+@click.option(
+    "--purge",
+    "-p",
+    is_flag=True,
+    default=False,
+    help="Purge is used to stop the job and purge it from the system.",
+)
+@utils.pass_config
+def stop(config, input, var_files, purge):
+    job_spec = templates.render(input, var_files)
+    job = config.parse_hcl_or_exit(job_spec)
+    params = {"purge": "true" if purge else "false"}
+    response = config.client.delete(f"/v1/job/{job['ID']}", params=params)
+    if response.status_code != 200:
+        raise utils.ApiError(response)
+    data = response.json()
+    click.secho("Job Deletion:", bold=True)
+    success, _ = monitor_evaluation(config, data["EvalID"])
+
+    if success:
+        click.secho("\nJob deletion finished succesfully.", fg="green", bold=True)
+    else:
+        click.secho("\nJob deletion failed.", fg="red", bold=True)
+        click.exit(1)
 
 
 @cli.command()
@@ -145,9 +177,10 @@ def plan_job(ctx, config, job, verbose):
     return data
 
 
-def monitor_job(config, eval_id, deployment_id=None):
+def monitor_evaluation(config, eval_id):
     click.echo(f"- Monitoring evaluation {repr(eval_id)}.")
-    while deployment_id is None:
+    deployment_id = None
+    while True:
         response = config.client.get(f"/v1/evaluation/{eval_id}")
         if response.status_code != 200:
             raise utils.ApiError(response)
@@ -156,23 +189,24 @@ def monitor_job(config, eval_id, deployment_id=None):
 
         if status in ("failed", "cancelled"):
             click.echo(f"Evaluation failed: {eval['StatusDescription']}")
-            return False
+            return False, deployment_id
         elif status == "complete":
             if eval.get("NextEval", None):
                 eval_id = eval["NextEval"]
+                click.echo(f"- Evaluation {repr(eval_id)} completed successfully.")
                 click.echo(f"- Monitoring evaluation {repr(eval_id)}.")
-            elif eval.get("DeploymentID", None):
-                deployment_id = eval["DeploymentID"]
             else:
-                click.echo(
-                    "- Job has been scheduled, but there is no deployment to monitor.",
-                )
-                return True
+                deployment_id = eval.get("DeploymentID", None)
+                break
         else:
             time.sleep(3)
-            continue
 
     click.echo(f"- Evaluation {repr(eval_id)} completed successfully.")
+
+    return True, deployment_id
+
+
+def monitor_deployment(config, deployment_id):
     click.echo(f"- Monitoring deployment {repr(deployment_id)}.")
     while True:
         response = config.client.get(f"/v1/deployment/{deployment_id}")
