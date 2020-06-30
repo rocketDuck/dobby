@@ -68,7 +68,7 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
         click.secho("\nJob deployment finished succesfully.", fg="green", bold=True)
     else:
         click.secho("\nJob deployment failed.", fg="red", bold=True)
-        click.exit(1)
+        ctx.exit(1)
 
 
 @cli.command()
@@ -84,6 +84,7 @@ def deploy(ctx, config, input, verbose, detach, var_files, strict=True):
 @utils.pass_config
 @click.pass_context
 def plan(ctx, config, input, var_files, verbose):
+    """Dry-run a job update to determine its effects."""
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
 
@@ -102,6 +103,7 @@ def plan(ctx, config, input, var_files, verbose):
 )
 @utils.pass_config
 def stop(config, input, var_files, purge):
+    """Stop a running job."""
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
     params = {"purge": "true" if purge else "false"}
@@ -124,7 +126,7 @@ def stop(config, input, var_files, purge):
 @utils.template_options
 @utils.pass_config
 def validate(config, input, var_files):
-    """Validate a job specification."""
+    """Checks if a given job specification is valid."""
     job_spec = templates.render(input, var_files)
     job = config.parse_hcl_or_exit(job_spec)
 
@@ -182,20 +184,18 @@ def monitor_evaluation(config, eval_id):
         status = eval["Status"]
 
         if status in ("failed", "cancelled"):
-            click.echo(f"Evaluation failed: {eval['StatusDescription']}")
+            click.echo("\n" f"Evaluation failed: {eval['StatusDescription']}")
             return False, deployment_id
         elif status == "complete":
+            click.echo(f"- Evaluation {repr(eval_id)} completed successfully.")
             if eval.get("NextEval", None):
                 eval_id = eval["NextEval"]
-                click.echo(f"- Evaluation {repr(eval_id)} completed successfully.")
                 click.echo(f"- Monitoring evaluation {repr(eval_id)}.")
             else:
                 deployment_id = eval.get("DeploymentID", None)
                 break
         else:
             time.sleep(3)
-
-    click.echo(f"- Evaluation {repr(eval_id)} completed successfully.")
 
     return True, deployment_id
 
@@ -210,7 +210,7 @@ def monitor_deployment(config, deployment_id):
         status = deployment["Status"]
 
         if status in ("failed", "cancelled"):
-            click.echo(f"Deployment failed: {eval['StatusDescription']}")
+            click.echo("\n" f"Deployment failed: {deployment['StatusDescription']}")
             return False
         elif status == "successful":
             click.echo(f"- Deployment {repr(deployment_id)} completed successfully.")
