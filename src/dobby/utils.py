@@ -9,7 +9,7 @@ from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from .config import Config
 
 
-class ApiError(Exception):
+class ApiError(Exception):  # noqa
     def __init__(self, response):
         self.response = response
 
@@ -82,12 +82,10 @@ class Group(click.Group):
         except NetworkError as e:
             click.secho(f"Network-error: {e.args[0]}", fg="red", err=True)
         except TemplateSyntaxError as e:
-            click.secho(f"Template parsing failed: {e.message}{nl}", fg="red", err=True)
+            click.secho(f"Template parsing failed: {e}{nl}", fg="red", err=True)
             raise
         except UndefinedError as e:
-            click.secho(
-                f"Template rendering failed: {e.message}{nl}", fg="red", err=True
-            )
+            click.secho(f"Template rendering failed: {e}{nl}", fg="red", err=True)
             raise
 
         sys.exit(1)
@@ -138,7 +136,10 @@ def connectivity_options(f):
             "--ca-path",
             envvar="NOMAD_CAPATH",
             type=click.Path(exists=True, file_okay=False, dir_okay=True),
-            help="Path to a directory of PEM encoded CA cert files to verify the Nomad server SSL certificate.",
+            help=(
+                "Path to a directory of PEM encoded CA cert files "
+                "to verify the Nomad server SSL certificate."
+            ),
             **shared,
         ),
         click.option(
@@ -152,7 +153,10 @@ def connectivity_options(f):
             "--client-key",
             envvar="NOMAD_CLIENT_KEY",
             type=click.Path(exists=True, file_okay=True, dir_okay=False),
-            help="Path to an unencrypted PEM encoded private key matching the client certificate from -client-cert.",
+            help=(
+                "Path to an unencrypted PEM encoded private key "
+                "matching the client certificate from -client-cert."
+            ),
             **shared,
         ),
         click.option(
@@ -192,7 +196,10 @@ def template_options(f):
             type=path_type,
             default=[],
             multiple=True,
-            help="The variable file (.env/.json/.yaml) to render the template with. Can be specified multiple times.",
+            help=(
+                "The variable file (.env/.json/.yaml) to render "
+                "the template with. Can be specified multiple times."
+            ),
         ),
         click.argument("input", type=path_type),
     ]

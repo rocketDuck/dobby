@@ -34,11 +34,11 @@ class StrictUndefined(JinjaUndefined):
         obj=missing,
         name=None,
         exc=UndefinedError,
-        previous=[],
-        os_environ={},
+        previous=None,
+        os_environ=None,
     ):
-        self._previous = previous
-        self._os_environ = os_environ
+        self._previous = previous or []
+        self._os_environ = os_environ or {}
         super().__init__(hint, obj, name, exc)
 
     def __getattr__(self, key):
