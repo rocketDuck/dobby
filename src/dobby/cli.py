@@ -135,9 +135,9 @@ def validate(config, input, var_files):
         warnings = response["Warnings"]
         separating_nl = "\n" if errors and warnings else ""
         if warnings:
-            click.secho(f"{warnings}{separating_nl}", fg="yellow", err=True)
+            click.secho(f"{warnings.rstrip()}{separating_nl}", fg="yellow", err=True)
         if errors:
-            click.secho(errors, fg="red", err=True)
+            click.secho(errors.rstrip(), fg="red", err=True)
             sys.exit(1)
         separating_nl = "\n" if warnings else ""
         click.secho(f"{separating_nl}Validated job spec successfully!", fg="green")

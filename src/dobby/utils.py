@@ -73,7 +73,7 @@ class Group(click.Group):
         try:
             return super().main(*args, **kwargs)
         except ApiError as e:
-            status, text = e.response.status_code, e.response.text
+            status, text = e.response.status_code, e.response.text.rstrip()
             click.secho(
                 f"API call failed with status code {status} and message:\n\n{text}",
                 fg="red",
