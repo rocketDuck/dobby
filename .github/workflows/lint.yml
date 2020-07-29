@@ -28,8 +28,8 @@ jobs:
         poetry export --dev --format requirements.txt > dev-requirements.txt
         python -m pip install --requirement dev-requirements.txt
     - name: Lint with isort
-      run: isort --check-only src
+      run: isort --check-only src tests
     - name: Lint with black
-      run: black --check src
+      run: black --check src tests
     - name: Lint with flake8
-      run: flake8 src
+      run: flake8 src tests

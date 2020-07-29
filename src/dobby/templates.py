@@ -102,10 +102,10 @@ def merge_dict(current, next):
     return current
 
 
-def merge_var_files(*var_files):
-    env = os.environ
+def merge_var_files(*var_files, env=os.environ):
     vars = []
     for fname in var_files:
+        fname = str(fname)
         if fname.endswith(".env"):
             env.update(DotEnv(fname).dict())
         else:
@@ -123,8 +123,8 @@ def merge_var_files(*var_files):
         return functools.reduce(merge_dict, vars), env
 
 
-def render(hcl_file, var_files):
-    vars, os_environ = merge_var_files(*var_files)
+def render(hcl_file, var_files, env=os.environ):
+    vars, os_environ = merge_var_files(*var_files, env=env)
     os_environ = {
         k: v
         for k, v in os_environ.items()
