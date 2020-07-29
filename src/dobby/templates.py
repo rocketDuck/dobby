@@ -2,136 +2,97 @@ import functools
 import json
 import os
 import pathlib
+import re
 
 import yaml
 from dotenv.main import DotEnv
-from jinja2 import Environment, FileSystemLoader
-from jinja2 import StrictUndefined as JinjaUndefined
-from jinja2 import UndefinedError
+from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from jinja2.runtime import Context
-from jinja2.utils import missing
 
-ENV_TRANS_TABLE = str.maketrans({"_": "", "-": "", ".": "_"})
-
-
-def to_env_name(key):
-    return key.upper().translate(ENV_TRANS_TABLE)
+NORMALIZATION_RE = re.compile("[^0-9a-z]")
 
 
-class StrictUndefined(JinjaUndefined):
-    __slots__ = (
-        "_undefined_hint",
-        "_undefined_obj",
-        "_undefined_name",
-        "_undefined_exception",
-        "_previous",
-        "_os_environ",
-    )
-
-    def __init__(
-        self,
-        hint=None,
-        obj=missing,
-        name=None,
-        exc=UndefinedError,
-        previous=None,
-        os_environ=None,
-    ):
-        self._previous = previous or []
-        self._os_environ = os_environ or {}
-        super().__init__(hint, obj, name, exc)
-
-    def __getattr__(self, key):
-        parts = self._previous + [key]
-        env_name = to_env_name(".".join(parts))
-        if env_name in self._os_environ:
-            return self._os_environ[env_name]
-        else:
-            return StrictUndefined(
-                self._undefined_hint,
-                self._undefined_obj,
-                self._undefined_name,
-                self._undefined_exception,
-                parts,
-                self._os_environ,
-            )
-
-    __getitem__ = __getattr__
+def normalize_key(key):
+    return NORMALIZATION_RE.sub("", key.lower())
 
 
-class EnvLookupDict(dict):
-    def __init__(self, data, previous, os_environ):
-        self._previous = previous
-        self._os_environ = os_environ
-        super().__init__(data)
-
-    def __getitem__(self, key):
-        parts = self._previous + [key]
-        env_name = to_env_name(".".join(parts))
-        if env_name in self._os_environ:
-            return self._os_environ[env_name]
-        try:
-            result = super().__getitem__(key)
-        except KeyError:
-            return StrictUndefined(
-                name=key, previous=parts, os_environ=self._os_environ
-            )
-        if isinstance(result, dict):
-            result = EnvLookupDict(result, parts, self._os_environ)
-        return result
+def normalize_object(obj):
+    if not isinstance(obj, dict):
+        return obj
+    return {normalize_key(k): normalize_object(v) for k, v in obj.items()}
 
 
-class EnvLookupContext(Context):
-    def resolve(self, key):
-        env_name = to_env_name(key)
-        if env_name in self.environment.os_environ:
-            return self.environment.os_environ[env_name]
-        result = super().resolve(key)
-        if isinstance(result, dict):
-            result = EnvLookupDict(result, [key], self.environment.os_environ)
-        return result
+def os_env_to_dict(env):
+    result = {}
+    for key, value in env.items():
+        parts = key.split("_")
+        current = result
+        while len(parts) > 1:
+            part = normalize_key(parts.pop(0))
+            current = current.setdefault(part, {})
+        current[normalize_key(parts[0])] = value
+    return result
 
 
-def merge_dict(current, next):
-    current = current.copy()
-    for key, value in next.items():
-        if isinstance(value, dict) and isinstance(current.get(key, None), dict):
-            current[key] = merge_dict(current[key], value)
-        else:
-            current[key] = value
-    return current
-
-
-def merge_var_files(*var_files, env=os.environ):
-    vars = []
-    for fname in var_files:
-        fname = str(fname)
-        if fname.endswith(".env"):
-            env.update(DotEnv(fname).dict())
-        else:
-            with open(fname) as f:
-                if fname.endswith(".json"):
-                    vars.append(json.load(f))
-                else:
-                    vars.append(yaml.safe_load(f))
-
-    if not vars:
-        return {}, env
-    elif len(vars) == 1:
-        return vars[0], env
+def load_var_file(f):
+    f = pathlib.Path(f)
+    ext = f.suffix
+    if ext == ".env":
+        data = os_env_to_dict(DotEnv(f).dict())
     else:
-        return functools.reduce(merge_dict, vars), env
+        with open(f) as fh:
+            if ext == ".json":
+                data = json.load(fh,)
+            else:
+                data = yaml.safe_load(fh)
+        data = normalize_object(data)
+    return data
 
 
-def render(hcl_file, var_files, env=os.environ):
-    vars, os_environ = merge_var_files(*var_files, env=env)
+def load_vars(var_files, os_environ):
+    vars = [load_var_file(f) for f in var_files]
     os_environ = {
         k: v
         for k, v in os_environ.items()
         if k.split("_")[0] not in ("NOMAD", "CONSUL")
     }
-    vars = merge_dict(vars, os_environ)
+    vars.append(os_env_to_dict(os_environ))
+    return functools.reduce(merge_dict, vars)
 
+
+def merge_dict(d1, d2):
+    d1 = d1.copy()
+    for key, value in d2.items():
+        if isinstance(value, dict) and isinstance(d1.get(key, None), dict):
+            d1[key] = merge_dict(d1[key], value)
+        else:
+            d1[key] = value
+    return d1
+
+
+def normalized_lookup_dict(d):
+    return NormalizedLookupDict(
+        {
+            k: normalized_lookup_dict(v) if isinstance(v, dict) else v
+            for k, v in d.items()
+        }
+    )
+
+
+class NormalizedLookupDict(dict):
+    def __init__(self, d):
+        super().__init__(d)
+
+    def __getitem__(self, key):
+        return super().__getitem__(normalize_key(key))
+
+
+class NormalizedLookupContext(Context):
+    def resolve(self, key):
+        return super().resolve(normalize_key(key))
+
+
+def render(hcl_file, var_files, os_environ=os.environ):
     p = pathlib.Path(hcl_file)
     template_name = p.name
     search_path = p.parent
@@ -145,8 +106,11 @@ def render(hcl_file, var_files, env=os.environ):
         variable_end_string="]]",
         comment_start_string="[#",
         comment_end_string="#]",
+        undefined=StrictUndefined,
     )
-    env.context_class = EnvLookupContext
-    env.os_environ = os_environ
+    # NormalizedLookupContext is needed because jinja will reconstruct the context :/
+    env.context_class = NormalizedLookupContext
     template = env.get_template(template_name)
-    return template.render(vars)
+    # Call `normalized_lookup_dict` so all lookups are normalized to the correct form
+    variables = normalized_lookup_dict(load_vars(var_files, os_environ))
+    return template.render(variables)
