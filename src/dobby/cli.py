@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 
@@ -221,4 +222,7 @@ def monitor_deployment(config, deployment_id):
 
 
 def main():
-    return cli.main(prog_name="dobby", max_content_width=220)
+    color = None
+    if str(os.environ.get("FORCE_COLOR", 0)).lower() in {"true", "yes", "1"}:
+        color = True
+    return cli.main(prog_name="dobby", max_content_width=220, color=color)
