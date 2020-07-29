@@ -27,5 +27,6 @@ jobs:
         python -m pip install --upgrade pip poetry
         poetry export --dev --format requirements.txt > dev-requirements.txt
         python -m pip install --requirement dev-requirements.txt
+        python -m pip install .
     - name: Run tests with pytest
       run: pytest
