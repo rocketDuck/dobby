@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from dobby.templates import render, os_env_to_dict, load_var_file, load_vars
+from dobby.templates import load_var_file, load_vars, os_env_to_dict, render
 
 
 @pytest.fixture
