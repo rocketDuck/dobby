@@ -59,5 +59,3 @@ JOB_NAME=test
 JOB_DC=dc22
 JOB_DBURL=postgresql://host/db
 ```
-
-For people solely relying on environment variables the Jinja template context also contains them directly (ie they can be accessed via `[[ JOB_DBURL ]]`). In general dotted notation is prefered as it allows support for environment variables as well as variable files.
