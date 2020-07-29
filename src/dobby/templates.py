@@ -29,7 +29,9 @@ def os_env_to_dict(env):
         current = result
         while len(parts) > 1:
             part = normalize_key(parts.pop(0))
-            current = current.setdefault(part, {})
+            if not isinstance(current.get(part, None), dict):
+                current[part] = {}
+            current = current[part]
         current[normalize_key(parts[0])] = value
     return result
 

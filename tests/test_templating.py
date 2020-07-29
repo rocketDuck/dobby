@@ -19,6 +19,12 @@ def test_env_to_dict():
     }
 
 
+def test_env_to_dict_overlap():
+    source = {"HOME": 42, "HOME_PATH": "test"}
+    result = os_env_to_dict(source)
+    assert result == {"home": {"path": "test"}}
+
+
 def test_load_json(root):
     json = root / "vars/vars.json"
     data = load_var_file(json)
