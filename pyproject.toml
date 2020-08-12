@@ -18,7 +18,7 @@ dobby = 'dobby.cli:main'
 [tool.poetry.dependencies]
 python = ">=3.6,<3.9"
 jinja2 = "^2.11.1"
-httpx = "^0.13.0"
+httpx = "^0.14.0"
 click = "^7.1.1"
 colorama = "^0.4.3"
 PyYAML = "^5.3.1"
@@ -27,13 +27,13 @@ python-dotenv = "^0.14.0"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
-isort = "^5.1.4"
+isort = "^5.3.2"
 flake8 = "^3.7.9"
 flake8-bugbear = "^20.1.4"
-pex = "2.1.14"
+pex = "2.1.15"
 bump2version = "^1.0.0"
-pyinstaller = "^3.6"
-pytest = "^6.0.0"
+pyinstaller = "^4.0"
+pytest = "^6.0.1"
 
 [tool.pytest.ini_options]
 addopts = "-ra -q"
