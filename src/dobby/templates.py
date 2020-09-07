@@ -44,7 +44,7 @@ def load_var_file(f):
     else:
         with open(f) as fh:
             if ext == ".json":
-                data = json.load(fh,)
+                data = json.load(fh)
             else:
                 data = yaml.safe_load(fh)
         data = normalize_object(data)

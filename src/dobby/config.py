@@ -53,7 +53,7 @@ class Config:
         )
 
     def ssl_context(
-        self, ca_bundle, client_cert=None, client_key=None, tls_skip_verify=False,
+        self, ca_bundle, client_cert=None, client_key=None, tls_skip_verify=False
     ):
         context = NomadSSLContext(ssl.PROTOCOL_TLS)
         context.options |= ssl.OP_NO_SSLv2
