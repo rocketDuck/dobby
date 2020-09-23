@@ -18,7 +18,7 @@ dobby = 'dobby.cli:main'
 [tool.poetry.dependencies]
 python = ">=3.6,<3.9"
 jinja2 = "^2.11.1"
-httpx = "^0.14.0"
+httpx = "^0.15.0"
 click = "^7.1.1"
 colorama = "^0.4.3"
 PyYAML = "^5.3.1"
