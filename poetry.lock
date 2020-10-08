@@ -146,7 +146,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "h11"
-version = "0.9.0"
+version = "0.11.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
 category = "main"
 optional = false
@@ -154,22 +154,22 @@ python-versions = "*"
 
 [[package]]
 name = "httpcore"
-version = "0.11.1"
+version = "0.12.0"
 description = "A minimal low-level HTTP client."
 category = "main"
 optional = false
 python-versions = ">=3.6"
 
 [package.dependencies]
-h11 = ">=0.8,<0.10"
+h11 = "<1.0.0"
 sniffio = ">=1.0.0,<2.0.0"
 
 [package.extras]
-http2 = ["h2 (>=3.0.0,<4.0.0)"]
+http2 = ["h2 (>=3,<5)"]
 
 [[package]]
 name = "httpx"
-version = "0.15.5"
+version = "0.16.0"
 description = "The next generation HTTP client."
 category = "main"
 optional = false
@@ -177,7 +177,7 @@ python-versions = ">=3.6"
 
 [package.dependencies]
 certifi = "*"
-httpcore = ">=0.11.0,<0.12.0"
+httpcore = ">=0.12.0,<0.13.0"
 rfc3986 = {version = ">=1.3,<2", extras = ["idna2008"]}
 sniffio = "*"
 
@@ -319,7 +319,7 @@ future = "*"
 
 [[package]]
 name = "pex"
-version = "2.1.16"
+version = "2.1.17"
 description = "The PEX packaging toolchain."
 category = "dev"
 optional = false
@@ -531,7 +531,7 @@ testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.6,<3.9"
-content-hash = "95d4642fd1a337986b3ddaf4cd788d2c3cf7733136b524d9b7b57968d9701938"
+content-hash = "fb5307fea4e891e2df59839af0cd2c55bdabd878e7fb7880df5fcdf7912d96bb"
 
 [metadata.files]
 altgraph = [
@@ -589,16 +589,16 @@ future = [
     {file = "future-0.18.2.tar.gz", hash = "sha256:b1bead90b70cf6ec3f0710ae53a525360fa360d306a86583adc6bf83a4db537d"},
 ]
 h11 = [
-    {file = "h11-0.9.0-py2.py3-none-any.whl", hash = "sha256:4bc6d6a1238b7615b266ada57e0618568066f57dd6fa967d1290ec9309b2f2f1"},
-    {file = "h11-0.9.0.tar.gz", hash = "sha256:33d4bca7be0fa039f4e84d50ab00531047e53d6ee8ffbc83501ea602c169cae1"},
+    {file = "h11-0.11.0-py2.py3-none-any.whl", hash = "sha256:ab6c335e1b6ef34b205d5ca3e228c9299cc7218b049819ec84a388c2525e5d87"},
+    {file = "h11-0.11.0.tar.gz", hash = "sha256:3c6c61d69c6f13d41f1b80ab0322f1872702a3ba26e12aa864c928f6a43fbaab"},
 ]
 httpcore = [
-    {file = "httpcore-0.11.1-py3-none-any.whl", hash = "sha256:72cfaa461dbdc262943ff4c9abf5b195391a03cdcc152e636adb4239b15e77e1"},
-    {file = "httpcore-0.11.1.tar.gz", hash = "sha256:a35dddd1f4cc34ff37788337ef507c0ad0276241ece6daf663ac9e77c0b87232"},
+    {file = "httpcore-0.12.0-py3-none-any.whl", hash = "sha256:18c4afcbfe884b635e59739105aed1692e132bc5d31597109f3c1c97e4ec1cac"},
+    {file = "httpcore-0.12.0.tar.gz", hash = "sha256:2526a38f31ac5967d38b7f593b5d8c4bd3fa82c21400402f866ba3312946acbf"},
 ]
 httpx = [
-    {file = "httpx-0.15.5-py3-none-any.whl", hash = "sha256:02326f2d3c61133db31e4b88dd3432479b434e52a68d813eab6db930f13611ea"},
-    {file = "httpx-0.15.5.tar.gz", hash = "sha256:254b371e3880a8e2387bf9ead6949bac797bd557fda26eba19a6153a0c06bd2b"},
+    {file = "httpx-0.16.0-py3-none-any.whl", hash = "sha256:824325d2dfb42ee6e3be31e072199a33e5a98dc2bda76fd6c9a844871948eb73"},
+    {file = "httpx-0.16.0.tar.gz", hash = "sha256:032c624c703cfa3aafe2d3a766150b48bcf8df71e833c1440fa74151da9df143"},
 ]
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
@@ -693,8 +693,8 @@ pefile = [
     {file = "pefile-2019.4.18.tar.gz", hash = "sha256:a5d6e8305c6b210849b47a6174ddf9c452b2888340b8177874b862ba6c207645"},
 ]
 pex = [
-    {file = "pex-2.1.16-py2.py3-none-any.whl", hash = "sha256:159b50c1546f816c9b50af0c542763d6604e0acd2f075bdb6e03c72d7a0b13ad"},
-    {file = "pex-2.1.16.tar.gz", hash = "sha256:bdae7141f63d17b83f1db50bf12a3a9cdfa6e1d91befd24296fcf6694d5567a0"},
+    {file = "pex-2.1.17-py2.py3-none-any.whl", hash = "sha256:abf45095a843a1f11b58861696576461a0d3171c8c2b699748c90bfb62575855"},
+    {file = "pex-2.1.17.tar.gz", hash = "sha256:d81fb8dffc06e32b2eda10f04f737e3b746f01ecdaa3b0d03bf70dec48d43eb4"},
 ]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
