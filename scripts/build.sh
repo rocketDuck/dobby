@@ -3,7 +3,8 @@ set -e
 mkdir -p bin dist repo
 rm -f bin/* dist/* repo/*
 poetry build
-poetry export --without-hashes --format=requirements.txt --output=requirements.txt
+poetry export --without-hashes --format=requirements.txt --output=requirements-pre.txt
+grep -Ev "(immutables|contextvars)==" requirements-pre.txt > requirements.txt
 pip wheel --wheel-dir=repo --constraint=requirements.txt PyYAML
 # Hack, but PyYAML in that configuration is actually a universal wheel
 mv repo/PyYAML-5.3.1-cp38-cp38-linux_x86_64.whl repo/PyYAML-5.3.1-py3-none-any.whl
