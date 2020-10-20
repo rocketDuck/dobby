@@ -60,7 +60,7 @@ jobs:
         run: yum install -y python3 upx
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip poetry
+          python3 -m pip install --upgrade pip poetry==1.1.2
           poetry export --dev --format requirements.txt > dev-requirements.txt
           python3 -m pip install --requirement dev-requirements.txt
       - name: Build linux distribution
