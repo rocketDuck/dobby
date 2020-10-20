@@ -15,7 +15,7 @@ jobs:
           python-version: '3.8'
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip poetry
+          python -m pip install --upgrade pip poetry==1.1.2
           poetry export --dev --format requirements.txt > dev-requirements.txt
           pip install --requirement dev-requirements.txt
       - name: Build python distribution
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip poetry
+          python -m pip install --upgrade pip poetry==1.1.2
           poetry export --dev --format requirements.txt > dev-requirements.txt
           pip install --requirement dev-requirements.txt
       - name: Build pex distribution
