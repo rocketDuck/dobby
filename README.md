@@ -1,3 +1,6 @@
+> :warning: **unmaintained**: With the introduction of HCLv2 in nomad 1.0 it is no longer easily possible to handle the nomad files since functions in HCL require client side evaluation.
+
+
 # Dobby
 
 Dobby is a [Jinja](https://jinja.palletsprojects.com/)-powered opensource templating and deployment tool for [HashiCorp Nomad](https://www.nomadproject.io/) inspired by [Levant](https://github.com/jrasell/levant).
